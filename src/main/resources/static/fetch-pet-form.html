@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>FetchPetForm</title>
+	</head>
+	<body>
+		<h2>Fetch Pet By Id</h2>
+		<form id="fetch-pet-form">
+			<label for="pet-id">Pet Id:</label> <br>
+			<input type="number" id="pet-id" name="pet-id" required><br>
+			<button type="submit">Fetch Pet</button>
+		</form>
+		
+		<div id="fetched-pet">
+			
+		</div>
+		
+		<div>
+			<h2>Update the Pet</h2>
+			<form id="update-pet-form">
+				<label for="update-name">Name</label>
+				<input type="text" id="update-name" name="update-name" required/> <br>
+				<label for="update-age">Age</label>
+				<input type="number" id="update-age" name="update-age" required/> <br>
+				<label for="update-description">Description</label>
+				<input type="text" id="update-description" name="update-description" required/> <br>
+				<label for="update-price">Price</label>
+				<input type="text" id="update-price" name="update-price" required/> <br>
+				<button type="submit">Upadte Pet</button>
+			</form>
+		</div>
+		
+		<div>
+		        <h2>Cart Products</h2>
+		        <button onclick="fetchCartProducts()">Show Cart Products</button>
+		        <div id="cart-products"></div>
+		    </div>
+		
+		<script>
+		
+			// fetching the pet by id
+		function fetchPetById(id){
+			fetch(`/api/pets/${id}`)
+			.then(response => response.json())
+				.then(data => {
+					
+					let fetchedPetDiv = document.getElementById('fetched-pet');
+					fetchedPetDiv.innerHTML = '';
+					if(data){
+						let petDetails = document.createElement('div');
+						petDetails.innerHTML = `
+							<h3>Pet Information </h3>
+							<p>Pet Name : ${data.name}</p>
+							<p>Pet Description : ${data.description}</p>
+							<p>Pet Age: ${data.age} </p>
+							<p>Pet Price: ${data.price}</p>
+							<p><a href="#" id="add-to-cart">Add To Cart</a></p>
+						`;
+						
+						fetchedPetDiv.appendChild(petDetails);
+						//alert(`Pet found : ${data.name}`);
+						
+						document.getElementById("add-to-cart").addEventListener('click', function(event){
+							event.preventDefault();
+							// function to add respective id to cart
+							addToCart(data.id);
+						
+							document.getElementById("update-name").value = data.name;
+							document.getElementById("update-age").value = data.age;
+							document.getElementById("update-description").value = data.description;
+							document.getElementById("update-price").value = data.price;
+							document.getElementById("update-pet-form").dataset.petId = data.id;
+						});
+					}else{
+						//alert("Pet not found...!");
+						fetchedPetDiv.textContent = 'Pet Not Found';
+					}
+				})
+				.catch(error => console.log(error));
+		}
+		
+		//function to add id to cart
+		function addToCart(petId){
+			fetch(`/api/cart/add/${petId}`, {
+			       method: 'POST'
+			   })
+			   .then(response => response.json())
+			   .then(data => {
+			       alert(data.message);
+			   });	
+		}
+		
+				
+		// handle the update-pet-form submission logic
+		document.getElementById("update-pet-form").addEventListener('submit', function(event){
+			
+			event.preventDefault();
+			
+			let petId = document.getElementById("update-pet-form").dataset.petId;
+			let updatedPet = {
+				name: document.getElementById("update-name").value,
+				description: document.getElementById("update-description").value,
+				age: document.getElementById("update-age").value,
+				price: document.getElementById("update-price").value
+			}
+			  
+			fetch(`/api/pets/${petId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(updatedPet)
+			})
+			.then(response => response.json())
+			.then(data => {
+				let fetchedPetDiv = document.getElementById('fetched-pet');
+				fetchedPetDiv.innerHTML = `
+					<h3>Updated Pet Information</h3>
+					<p>Pet Name : ${data.name}</p>
+					<p>Pet Age : ${data.age}</p>
+					<p>Pet Description : ${data.description}</p>
+					<p>Pet Price: ${data.price}</p>
+				`;
+			}) 
+			.catch(error => console.log("Error : ", error));
+		});
+		
+		function fetchCartProducts() {
+		            fetch('/api/cart/products')
+		                .then(response => response.json())
+		                .then(data => {
+		                    const cartProductsDiv = document.getElementById('cart-products');
+		                    cartProductsDiv.innerHTML = '';
+
+		                    if (data.pets && data.pets.length > 0) {
+		                        data.pets.forEach(pet => {
+		                            const petDiv = document.createElement('div');
+		                            petDiv.innerHTML = `
+		                                <h4>Pet Name: ${pet.name}</h4>
+		                                <p>Description: ${pet.description}</p>
+		                                <p>Age: ${pet.age}</p>
+		                                <p>Price: ${pet.price}</p>
+		                            `;
+		                            cartProductsDiv.appendChild(petDiv);
+		                        });
+		                    } else {
+		                        cartProductsDiv.textContent = 'No pets in the cart.';
+		                    }
+		                })
+		                .catch(error => console.error('Error fetching cart products:', error));
+		        }
+		
+		document.getElementById('fetch-pet-form').addEventListener('submit', function (event){
+			event.preventDefault();
+			
+			let petId = document.getElementById('pet-id').value;
+			fetchPetById(petId);
+		});
+		</script>
+	</body>
+</html>

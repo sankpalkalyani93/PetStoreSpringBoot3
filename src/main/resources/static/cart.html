@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width= device-width, initial-scale=1.0">
+		<title>My Cart</title>
+		<link rel="stylesheet" href="css/styles.css">
+	</head>
+	<body>
+		<h1>My Shopping Cart</h1>
+		<div id="cart-items">
+			<!-- we will load cart items on demand -->
+		</div>
+		
+		<div id="cart-summary">
+			<h2>Cart Summary</h2>
+			Total Price : <p id="total-price"></p>
+			<button id="checkout-btn">Proceed To Checkout</button>
+		</div>
+		
+		<script>
+		
+		document.addEventListener('DOMContentLoaded', function() {
+				const urlParam =  new URLSearchParams(window.location.search);
+				const id = urlParam.get('id');
+			
+				fetch(`/api/cart/${id}`)
+				.then(response => response.json())
+				.then(data => {
+					const cartItemsDiv = document.getElementById("cart-items");
+					cartItemsDiv.innerHTML = '';
+					
+					if(data.pets.length > 0){
+						data.pets.forEach(pet => {
+							const itemDiv = document.createElement(`div`);
+							itemDiv.innerHTML = `
+								<p>${pet.name} - ${pet.price}</p>
+							`;
+							cartItemsDiv.appendChild(itemDiv);
+						});	
+						
+						const totalPrice = data.pets.reduce((total, pet) => total + pet.price);
+						document.getElementById("total-price").textContent = `${totalPrice}`;
+					}
+					else{
+						cartItemsDiv.innerHTML = `<p>Your cart is empty</p>`;
+						document.getElementById("total-price").textContent = ``;
+					}
+				})
+				.catch(error => console.log("Error : ", error));
+			});
+		</script>
+	</body>
+</html>
